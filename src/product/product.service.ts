@@ -23,10 +23,12 @@ import { ProductDepartmentService } from './product-department/product-departmen
 import { ProductCategoryService } from './product-category/product-category.service';
 import { CreateProductCategoryDto } from './product-category/dtos/create-product-category.dto';
 import { ProductStockService } from './product-stock/product-stock.service';
+import { KCService } from '../keycloak/keycloak.service';
 
 @Injectable()
 export class ProductService {
   collection: Collection;
+  kc: KCService;
 
   constructor(
     @Inject('DATABASE_CONNECTION')
@@ -35,8 +37,10 @@ export class ProductService {
     private departmentService: ProductDepartmentService,
     private categoryService: ProductCategoryService,
     private stockService: ProductStockService,
+    private keycloak: KCService,
   ) {
     try {
+      this.kc = keycloak;
       this.collection = db.collection(COLLECTION);
       this.collection
         .createIndex({ name: 1 }, { unique: true })
@@ -74,10 +78,11 @@ export class ProductService {
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
-    user,
+    userToken,
   ): Promise<UpdateWriteOpResult> {
     if (!ObjectID.isValid(id)) throw new BadRequestException();
     // add/override new brand if dont exist
+    const user = await this.kc.getUserInfo(userToken);
     if (updateProductDto.brand) {
       const response = await this.brandService.findByName(
         updateProductDto.brand.name,
@@ -117,7 +122,7 @@ export class ProductService {
           id,
           updateProductDto.stockAmount,
           updateProductDto.stockMinimumAlert,
-          user.sub,
+          user.id,
         );
         updateProductDto.stock = stock.ops[0];
         updateProductDto.status = status;
@@ -127,7 +132,7 @@ export class ProductService {
           stock._id,
           updateProductDto.stockAmount,
           updateProductDto.stockMinimumAlert,
-          user.sub,
+          user.id,
         );
       }
     }

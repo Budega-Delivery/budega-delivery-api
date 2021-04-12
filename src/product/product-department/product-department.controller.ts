@@ -19,7 +19,7 @@ export class ProductDepartmentController {
   ) {}
 
   @Post()
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   create(@Body() createProductDepartmentDto: CreateProductDepartmentDto) {
     return this.productDepartmentService.create(createProductDepartmentDto);
   }
@@ -41,7 +41,7 @@ export class ProductDepartmentController {
   }
 
   @Put(':id')
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   update(
     @Param('id') id: string,
     @Body() updateProductDepartmentDto: UpdateProductDepartmentDto,

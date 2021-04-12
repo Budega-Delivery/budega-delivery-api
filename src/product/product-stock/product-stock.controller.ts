@@ -7,7 +7,7 @@ export class ProductStockController {
   constructor(private readonly productStockService: ProductStockService) {}
 
   @Get()
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   findAll() {
     return [];
   }

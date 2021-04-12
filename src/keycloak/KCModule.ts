@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { KeycloakModule } from '@gaucho/nest-keycloak';
 
 import {
   KeycloakConnectModule,
@@ -8,8 +7,6 @@ import {
   RoleGuard,
   AuthGuard,
 } from 'nest-keycloak-connect';
-import { session } from '../main';
-import { KeycloakAdminModule } from '@gaucho/nest-keycloak/admin';
 
 @Module({
   imports: [
@@ -17,21 +14,7 @@ import { KeycloakAdminModule } from '@gaucho/nest-keycloak/admin';
       authServerUrl: 'http://localhost:8081/auth',
       realm: 'budega',
       clientId: 'budega-api',
-      secret: '8021efef-62fe-4a5d-8573-4a681b039a45',
-    }),
-
-    KeycloakModule.forRoot({
-      serverUrl: 'http://localhost:8081/auth',
-      realm: 'budega',
-      clientId: 'budega-app',
-      session,
-    }),
-
-    KeycloakAdminModule.forRoot({
-      serverUrl: 'http://localhost:8081/auth',
-      realm: 'budega',
-      adminUser: 'api',
-      adminPwd: 'seinaoapi',
+      secret: 'f529a2ee-e44b-4435-9e8e-04fa2eb30707',
     }),
   ],
   providers: [

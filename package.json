@@ -21,13 +21,12 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@gaucho/nest-keycloak": "^0.0.19",
     "@nestjs/common": "^7.5.1",
     "@nestjs/config": "^0.6.3",
     "@nestjs/core": "^7.5.1",
     "@nestjs/platform-express": "^7.5.1",
     "@types/mongodb": "^3.6.10",
-    "keycloak-connect": "^10.0.2",
+    "keycloak-admin": "*",
     "mongodb": "^3.6.4",
     "nest-keycloak-connect": "^1.4.3",
     "reflect-metadata": "^0.1.13",

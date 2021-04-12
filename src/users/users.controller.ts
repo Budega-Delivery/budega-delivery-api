@@ -28,6 +28,12 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Get()
+  @Roles('budega-app:manager')
+  getUsers() {
+    return this.usersService.findAll();
+  }
+
   @Get(':id')
   @Roles('budega-app:manager')
   findOne(@Param('id') id: string) {

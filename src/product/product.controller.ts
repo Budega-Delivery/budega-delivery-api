@@ -6,6 +6,7 @@ import {
   Put,
   Param,
   Delete,
+  Headers,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
@@ -14,7 +15,6 @@ import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Roles, Public } from 'nest-keycloak-connect';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { KeycloakUser, User } from '@gaucho/nest-keycloak';
 
 @Controller('products')
 export class ProductController {
@@ -40,17 +40,22 @@ export class ProductController {
   }
 
   @Put(':id')
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   async update(
+    @Headers('authorization') token: string,
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
-    @User() user: KeycloakUser,
   ) {
-    return await this.productService.update(String(id), updateProductDto, user);
+    // TODO: pass KC user to service
+    return await this.productService.update(
+      String(id),
+      updateProductDto,
+      token.replace('bearer ', ''),
+    );
   }
 
   @Put('image/:id')
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   @UseInterceptors(FileInterceptor('image'))
   async updateImage(
     @Param('id') id: string,
@@ -60,7 +65,7 @@ export class ProductController {
   }
 
   @Delete(':id')
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   async remove(@Param('id') id: string) {
     return await this.productService.remove(String(id));
   }

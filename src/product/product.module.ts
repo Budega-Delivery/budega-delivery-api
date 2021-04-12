@@ -11,6 +11,7 @@ import { ProductBrandService } from './product-brand/product-brand.service';
 import { ProductDepartmentService } from './product-department/product-department.service';
 import { ProductCategoryService } from './product-category/product-category.service';
 import { ProductStockService } from './product-stock/product-stock.service';
+import { KCService } from '../keycloak/keycloak.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ProductStockService } from './product-stock/product-stock.service';
     ProductDepartmentService,
     ProductCategoryService,
     ProductStockService,
+    KCService,
   ],
 })
 export class ProductModule {}

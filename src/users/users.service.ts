@@ -1,60 +1,68 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { KeycloakAdminService } from '@gaucho/nest-keycloak/admin';
-import KcAdminClient from 'keycloak-admin';
+import { KCService } from '../keycloak/keycloak.service';
+import UserRepresentation from 'keycloak-admin/lib/defs/userRepresentation';
 
 @Injectable()
 export class UsersService {
-  client: KcAdminClient;
+  kc: KCService;
 
-  constructor(keycloak: KeycloakAdminService) {
-    keycloak.client().then((res) => (this.client = res));
+  constructor(keycloak: KCService) {
+    this.kc = keycloak;
   }
 
   async create(createUserDto: CreateUserDto) {
+    // TODO: Fix This
     createUserDto.username = createUserDto.email;
-    return await this.client.users.create({
-      ...createUserDto,
-      realm: 'budega',
-    });
+    createUserDto.username = createUserDto.email;
+    const role = createUserDto.role;
+    delete createUserDto.role;
+    return await this.kc.addUser(createUserDto, role);
   }
 
   async findAll() {
-    return await this.client.users.find();
+    const roles = await this.kc.getClientRoles();
+    if (!roles.length) throw new HttpException('Invalid Content', 403);
+    const response: UserRepresentation[] = [];
+    for (const r of roles) {
+      const res = await this.kc.getUsersWithRole(r.name);
+      res.forEach((u) => {
+        u['clientRoles'] = r;
+        response.push(u);
+      });
+    }
+    return response;
   }
 
-  findOne(id: string) {
+  findOneUser(id: string) {
+    // TODO: Implements
     return `This action returns a #${id} user`;
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
+  updateUser(id: string, updateUserDto: UpdateUserDto) {
+    // TODO: Implements
     return `This action updates a #${id} user ${updateUserDto}`;
   }
 
   remove(id: string) {
+    // TODO: Implements
     return `This action removes a #${id} user`;
   }
 
   async createClient(createUserDto: CreateUserDto) {
+    // TODO: Fix This
     createUserDto.username = createUserDto.email;
-    const { id } = await this.client.users.create({
-      ...createUserDto,
-      realm: 'budega',
-    });
-    return await this.client.users.addClientRoleMappings({
-      id,
-      clientUniqueId: 'dca74eea-acf0-432a-9627-c6f705b1927b',
-      roles: [{ id: 'faa05aa6-b9ac-4401-8069-172ec27168d7', name: 'client' }],
-      realm: 'budega',
-    });
+    return await this.kc.addUser(createUserDto, 'client');
   }
 
   updateClient(id: string, updateUserDto: UpdateUserDto) {
+    // TODO: Implements
     return { id, updateUserDto };
   }
 
-  findClient(id: string) {
+  getClientInfo(id: string) {
+    // TODO: Implements
     return { id };
   }
 }

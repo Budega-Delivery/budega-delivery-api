@@ -18,7 +18,8 @@ export class ProductCategoryController {
     private readonly productCategoryService: ProductCategoryService,
   ) {}
 
-  @Post('budega-app:manager')
+  @Post()
+  @Roles('budega-app:manager', 'budega-app:stockist')
   create(@Body() createProductCategoryDto: CreateProductCategoryDto) {
     return this.productCategoryService.create(createProductCategoryDto);
   }
@@ -40,7 +41,7 @@ export class ProductCategoryController {
   }
 
   @Put(':id')
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   update(
     @Param('id') id: string,
     @Body() updateProductCategoryDto: UpdateProductCategoryDto,

@@ -17,7 +17,7 @@ export class ProductBrandController {
   constructor(private readonly productBrandService: ProductBrandService) {}
 
   @Post()
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   create(@Body() createProductBrandDto: CreateProductBrandDto) {
     return this.productBrandService.create(createProductBrandDto);
   }
@@ -41,7 +41,7 @@ export class ProductBrandController {
   }
 
   @Put(':id')
-  @Roles('budega-app:manager')
+  @Roles('budega-app:manager', 'budega-app:stockist')
   update(
     @Param('id') id: string,
     @Body() updateProductBrandDto: UpdateProductBrandDto,
