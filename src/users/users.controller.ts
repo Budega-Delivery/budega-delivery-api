@@ -34,16 +34,22 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get()
+  @Roles('budega-app:manager')
+  getRoles() {
+    return this.usersService.getAllRoles();
+  }
+
   @Get(':id')
   @Roles('budega-app:manager')
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+    return this.usersService.findOneUser(id);
   }
 
   @Get('client/:id')
   @Roles('budega-app:client')
   findClient(@Param('id') id: string) {
-    return this.usersService.findClient(id);
+    return this.usersService.getClientInfo(id);
   }
 
   @Put('client/:id')
@@ -55,7 +61,7 @@ export class UsersController {
   @Put(':id')
   @Roles('budega-app:manager')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.updateUser(id, updateUserDto);
   }
 
   @Delete(':id')

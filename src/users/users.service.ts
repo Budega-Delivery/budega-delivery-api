@@ -65,4 +65,8 @@ export class UsersService {
     // TODO: Implements
     return { id };
   }
+
+  async getAllRoles() {
+    return await this.kc.getClientRoles();
+  }
 }
