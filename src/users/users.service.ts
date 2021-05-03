@@ -35,9 +35,8 @@ export class UsersService {
     return response;
   }
 
-  findOneUser(id: string) {
-    // TODO: Implements
-    return `This action returns a #${id} user`;
+  async findOneUser(id: string) {
+    return await this.kc.getUserById(id);
   }
 
   updateUser(id: string, updateUserDto: UpdateUserDto) {
@@ -68,5 +67,10 @@ export class UsersService {
 
   async getAllRoles() {
     return await this.kc.getClientRoles();
+  }
+
+  async updateUserImage(id: string, imagePath: string) {
+    // TODO: save image in user attribute keycloak
+    return this.kc.updateUserAvatar(id, imagePath);
   }
 }

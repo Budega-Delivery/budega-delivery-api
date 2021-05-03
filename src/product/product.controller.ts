@@ -61,6 +61,9 @@ export class ProductController {
     @Param('id') id: string,
     @UploadedFile() image: Express.Multer.File,
   ) {
+    // TODO: read this http://www.nestjstutorials.com/nestjs-file-uploading-using-multer/
+    // TODO: save image in folder inside top root folder and
+    // TODO: save image url link into user atributes name avatar
     return await this.productService.updateImage(String(id), image);
   }
 

@@ -70,4 +70,30 @@ export class KCService {
       roles: [{ id: roleInfo.id, name: roleInfo.name }],
     });
   }
+
+  async getUserById(id: string) {
+    await this.connect();
+    let user = await this.kcAdminClient.users.findOne({ id: id });
+    let roles: RoleRepresentation[];
+    if (user) {
+      roles = await this.kcAdminClient.users.listClientRoleMappings({
+        id: user.id,
+        clientUniqueId: this.client.id,
+      });
+      user = { ...user, clientRoles: roles };
+    }
+    return user;
+  }
+
+  async updateUserAvatar(id: string, imagePath: string) {
+    await this.connect();
+    const user = await this.kcAdminClient.users.findOne({ id: id });
+    if (user)
+      return await this.kcAdminClient.users.update(
+        { id },
+        {
+          attributes: { avatar: imagePath },
+        },
+      );
+  }
 }

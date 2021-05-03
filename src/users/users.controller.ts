@@ -6,11 +6,16 @@ import {
   Put,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public, Roles } from 'nest-keycloak-connect';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { editFileName, imageFileFilter } from '../utils/image-upload.utils';
 
 @Controller('users')
 export class UsersController {
@@ -34,7 +39,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get()
+  @Get('roles')
   @Roles('budega-app:manager')
   getRoles() {
     return this.usersService.getAllRoles();
@@ -62,6 +67,24 @@ export class UsersController {
   @Roles('budega-app:manager')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.updateUser(id, updateUserDto);
+  }
+
+  @Post('image/:id')
+  @Roles('budega-app:manager')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: `./uploads`,
+        filename: editFileName,
+      }),
+      fileFilter: imageFileFilter,
+    }),
+  )
+  async updateImage(
+    @Param('id') id: string,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    return await this.usersService.updateUserImage(String(id), image.path);
   }
 
   @Delete(':id')
