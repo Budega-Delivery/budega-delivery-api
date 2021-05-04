@@ -69,6 +69,10 @@ export class UsersService {
     return await this.kc.getClientRoles();
   }
 
+  async activeUser(id: string, state: boolean) {
+    return await this.kc.activeUser(id, state);
+  }
+
   async updateUserImage(id: string, imagePath: string) {
     // TODO: save image in user attribute keycloak
     return this.kc.updateUserAvatar(id, imagePath);

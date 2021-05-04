@@ -87,6 +87,12 @@ export class UsersController {
     return await this.usersService.updateUserImage(String(id), image.path);
   }
 
+  @Post('active/:id')
+  @Roles('budega-app:manager')
+  async activeUser(@Param('id') id: string, @Body() state: any) {
+    return await this.usersService.activeUser(id, state.state);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);

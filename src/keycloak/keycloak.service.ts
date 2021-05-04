@@ -96,4 +96,14 @@ export class KCService {
         },
       );
   }
+
+  async activeUser(id: string, state: boolean) {
+    await this.connect();
+    return await this.kcAdminClient.users.update(
+      { id: id },
+      {
+        enabled: state,
+      },
+    );
+  }
 }
