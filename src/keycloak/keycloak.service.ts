@@ -2,26 +2,31 @@ import { HttpException, Injectable } from '@nestjs/common';
 import KcAdminClient from 'keycloak-admin';
 import UserRepresentation from 'keycloak-admin/lib/defs/userRepresentation';
 import RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
+import { GrantTypes } from 'keycloak-admin/lib/utils/auth';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class KCService {
   kcAdminClient: KcAdminClient;
-  client = { name: 'budega-app', id: 'b78ad266-5b08-444f-8fa0-acd19e5d9814' };
+  client = {
+    name: process.env.KC_APP_NAME,
+    id: process.env.KC_APP_ID,
+  };
 
   constructor() {
     this.kcAdminClient = new KcAdminClient({
-      baseUrl: 'http://localhost:8081/auth',
-      realmName: 'budega',
+      baseUrl: process.env.KC_BASE_URL,
+      realmName: process.env.KC_REALM_NAME,
     });
   }
 
   protected async connect(): Promise<void> {
     return await this.kcAdminClient.auth({
-      username: 'api',
-      password: 'seinao',
-      clientId: 'budega-api',
-      grantType: 'password',
-      clientSecret: 'f529a2ee-e44b-4435-9e8e-04fa2eb30707',
+      username: process.env.KC_USERNAME,
+      password: process.env.KC_PASSWORD,
+      clientId: process.env.KC_CLIENT_ID,
+      grantType: process.env.KC_GRANT_TYPE as GrantTypes,
+      clientSecret: process.env.KC_CLIENT_SECRET,
     });
   }
 
@@ -59,7 +64,7 @@ export class KCService {
           *name: string;;
         * */
     //TODO: ao startar app pegar todos os ids dos clients e das roles
-    //TODO: Move this to .env
+
     const roleInfo = await this.kcAdminClient.roles.findOneByName({
       name: role,
     });

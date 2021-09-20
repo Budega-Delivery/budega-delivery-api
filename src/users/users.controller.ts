@@ -95,6 +95,8 @@ export class UsersController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    // TODO: usuário só pode ser removido se não houver nenhum processo não finalizado
+    // TODO: adicionar uma cópia do usuário deletado em um document de usuário deletado no banco de dados
     return this.usersService.remove(id);
   }
 }

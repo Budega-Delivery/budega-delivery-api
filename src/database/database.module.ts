@@ -9,12 +9,16 @@ import { MongoClient, Db, Logger } from 'mongodb';
       useFactory: async (): Promise<Db> => {
         try {
           Logger.setLevel('debug');
-          const client = await MongoClient.connect(
-            'mongodb://budegaApi:seinao@localhost:27017/budega',
-            {
-              useUnifiedTopology: true,
-            },
-          );
+          const connectString = `mongodb://${process.env.DATABASE_USER}:${
+            process.env.DATABASE_PASSWORD
+          }@${process.env.DATABASE_URL}:${
+            parseInt(process.env.DATABASE_PORT, 10) || 27017
+          }/${process.env.DATABASE_NAME}`;
+          console.debug(connectString);
+          //'mongodb://budegaApi:seinao@localhost:27017/budega'
+          const client = await MongoClient.connect(connectString, {
+            useUnifiedTopology: true,
+          });
           return client.db();
           // await db.collection('users').createIndex({ email: 1 }, { unique: true, sparse: true });
         } catch (e) {

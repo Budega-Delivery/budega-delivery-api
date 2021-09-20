@@ -1,9 +1,0 @@
-export default () => ({
-database: {
-    host: process.env.DATABASE_URL,
-    port: parseInt(process.env.DATABASE_PORT, 10) || 27017,
-    collection:process.env.DATABASE_COLLECTION,
-    user:process.env.DATABASE_USER,
-    password:process.env.DATABASE_PASSWORD,
-})
-}
