@@ -11,10 +11,10 @@ import {
 @Module({
   imports: [
     KeycloakConnectModule.register({
-      authServerUrl: 'http://localhost:8081/auth',
-      realm: 'budega',
-      clientId: 'budega-api',
-      secret: 'f529a2ee-e44b-4435-9e8e-04fa2eb30707',
+      authServerUrl: process.env.KC_BASE_URL,
+      realm: process.env.KC_REALM_NAME,
+      clientId: process.env.KC_API_CLIENT,
+      secret: process.env.KC_API_SECRET,
     }),
   ],
   providers: [

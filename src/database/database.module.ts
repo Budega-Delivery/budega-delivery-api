@@ -15,7 +15,6 @@ import { MongoClient, Db, Logger } from 'mongodb';
             parseInt(process.env.DATABASE_PORT, 10) || 27017
           }/${process.env.DATABASE_NAME}`;
           console.debug(connectString);
-          //'mongodb://budegaApi:seinao@localhost:27017/budega'
           const client = await MongoClient.connect(connectString, {
             useUnifiedTopology: true,
           });
