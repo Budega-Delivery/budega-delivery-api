@@ -1,6 +1,5 @@
 import {
   IsBoolean,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -8,7 +7,6 @@ import {
   IsBase64,
   IsArray,
 } from 'class-validator';
-import { ProductStatus } from './product';
 import { ProductBrand } from '../product-brand/dtos/product-brand';
 import { ProductCategory } from '../product-category/dtos/product-category';
 import { ProductDepartment } from '../product-department/dtos/product-department';
@@ -31,15 +29,11 @@ export class UpdateProductDto {
   @IsOptional()
   images?: BinaryType[];
 
-  @IsEnum(ProductStatus)
-  @IsOptional()
-  status?: ProductStatus;
-
   @IsOptional()
   department?: ProductDepartment;
 
   @IsOptional()
-  brand: ProductBrand;
+  brand?: ProductBrand;
 
   @IsOptional()
   @IsArray()

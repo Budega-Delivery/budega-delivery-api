@@ -4,17 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { COLLECTION, Product, ProductStatus } from './dtos/product';
+import { COLLECTION, Product } from './dtos/product';
 
 import { ProductBrandService } from './product-brand/product-brand.service';
 
 import {
   Collection,
   Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
-  UpdateWriteOpResult,
+  DeleteResult,
+  InsertOneResult,
+  ObjectId,
+  UpdateResult,
 } from 'mongodb';
 
 import { CreateProductDto } from './dtos/create-product.dto';
@@ -24,6 +24,8 @@ import { ProductCategoryService } from './product-category/product-category.serv
 import { CreateProductCategoryDto } from './product-category/dtos/create-product-category.dto';
 import { ProductStockService } from './product-stock/product-stock.service';
 import { KCService } from '../keycloak/keycloak.service';
+import { ProductStock } from './product-stock/dtos/product-stock';
+import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 
 @Injectable()
 export class ProductService {
@@ -52,25 +54,41 @@ export class ProductService {
 
   async create(
     createProductDto: CreateProductDto,
-  ): Promise<InsertOneWriteOpResult<Product>> {
-    createProductDto.status = ProductStatus.OUT_OF_STOCK;
+    user: UserRepresentation,
+  ): Promise<InsertOneResult<Product>> {
     createProductDto.isActive = false;
-    return await this.collection.insertOne(createProductDto);
+    const newProduct = await this.collection.insertOne(createProductDto);
+    const newStock = await this.stockService.update(
+      newProduct.insertedId.toString(),
+      0,
+      0,
+      user['sub'],
+    );
+    await this.update(
+      newProduct.insertedId.toString(),
+      {
+        stock: newStock.value as unknown as ProductStock,
+      },
+      user,
+    );
+
+    return newProduct;
   }
 
   async findAll(): Promise<Product[]> {
-    return await this.collection.find().toArray();
+    // todo: add parameter to get only actives products [active, ! OUT_OF_STOCK]
+    return (await this.collection.find().toArray()) as unknown as Product[];
   }
 
   async findOne(id: string): Promise<Product> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
 
     const response = await this.collection.findOne({
-      _id: new ObjectID(id),
+      _id: new ObjectId(id),
     });
 
     if (!response) throw new NotFoundException();
-    return response;
+    return response as unknown as Product;
   }
 
   // TODO: Find by name
@@ -78,11 +96,11 @@ export class ProductService {
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
-    userToken,
-  ): Promise<UpdateWriteOpResult> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
-    // add/override new brand if dont exist
-    const user = await this.kc.getUserInfo(userToken);
+    user: UserRepresentation,
+  ): Promise<UpdateResult> {
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
+
+    // add/override new brand if his don't exist
     if (updateProductDto.brand) {
       const response = await this.brandService.findByName(
         updateProductDto.brand.name,
@@ -90,7 +108,7 @@ export class ProductService {
       if (!response) await this.brandService.create(updateProductDto.brand);
     }
 
-    // add/override new department if dont exist
+    // add/override new department if his don't exist
     if (updateProductDto.department) {
       const response = await this.departmentService.findByName(
         updateProductDto.department.name,
@@ -99,7 +117,7 @@ export class ProductService {
         await this.departmentService.create(updateProductDto.department);
     }
 
-    // add new category if dont exist
+    // add new category if his don't exist
     if (updateProductDto.categories) {
       for (const n of updateProductDto.categories) {
         const newC = new CreateProductCategoryDto();
@@ -116,32 +134,21 @@ export class ProductService {
       updateProductDto.stockAmount >= 0 &&
       updateProductDto.stockMinimumAlert >= 0
     ) {
-      const stock = await this.stockService.findByProductId(id);
-      if (!stock) {
-        const { stock, status } = await this.stockService.create(
-          id,
-          updateProductDto.stockAmount,
-          updateProductDto.stockMinimumAlert,
-          user.id,
-        );
-        updateProductDto.stock = stock.ops[0];
-        updateProductDto.status = status;
-      } else {
-        updateProductDto.status = await this.stockService.update(
-          id,
-          stock._id,
-          updateProductDto.stockAmount,
-          updateProductDto.stockMinimumAlert,
-          user.id,
-        );
-      }
+      const updatedStock = await this.stockService.update(
+        id,
+        updateProductDto.stockAmount,
+        updateProductDto.stockMinimumAlert,
+
+        user['sub'],
+      );
+      updateProductDto.stock = updatedStock.value as unknown as ProductStock;
     }
 
     delete updateProductDto.stockAmount;
     delete updateProductDto.stockMinimumAlert;
 
     return await this.collection.updateOne(
-      { _id: new ObjectID(id) },
+      { _id: new ObjectId(id) },
       { $set: { ...updateProductDto } },
     );
   }
@@ -149,19 +156,19 @@ export class ProductService {
   async updateImage(
     id: string,
     file: Express.Multer.File,
-  ): Promise<UpdateWriteOpResult> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+  ): Promise<UpdateResult> {
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
 
     return await this.db
       .collection(COLLECTION)
-      .updateOne({ _id: new ObjectID(id) }, { $set: { image: file } });
+      .updateOne({ _id: new ObjectId(id) }, { $set: { image: file } });
   }
 
-  async remove(id: string): Promise<DeleteWriteOpResultObject> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+  async remove(id: string): Promise<DeleteResult> {
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
     await this.stockService.remove(id);
     return await this.collection.deleteOne({
-      _id: new ObjectID(id),
+      _id: new ObjectId(id),
     });
   }
 }

@@ -2,13 +2,14 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   Collection,
   Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
+  DeleteResult,
+  InsertOneResult,
+  ModifyResult,
+  ObjectId,
+  UpdateResult,
 } from 'mongodb';
-import { COLLECTION, ProductStock } from './dtos/product-stock';
+import { COLLECTION, ProductStock, StockStatus } from './dtos/product-stock';
 // import { COLLECTION as HISTORY } from '../product-stock-history/dtos/product-stock-history';
-import { ProductStatus } from '../dtos/product';
 
 @Injectable()
 export class ProductStockService {
@@ -29,32 +30,28 @@ export class ProductStockService {
       throw err;
     }
   }
-  async create(
-    productId: string,
-    amount: number,
-    minimumAlert: number,
-    uid: string,
-  ): Promise<{
-    stock: InsertOneWriteOpResult<ProductStock>;
-    status: ProductStatus;
-  }> {
-    if (!ObjectID.isValid(productId)) throw new BadRequestException();
-    // TODO: add to history, need user keycloak ID
-    const stock = await this.collection.insertOne({
-      productId,
-      amount,
-      minimumAlert,
-      uid,
-    });
-    return { stock, status: this.status(amount, minimumAlert) };
-  }
+  // async create(
+  //   productId: string,
+  //   amount: number,
+  //   minimumAlert: number,
+  //   uid: string,
+  // ): Promise<InsertOneResult<ProductStock>> {
+  //   if (!ObjectId.isValid(productId)) throw new BadRequestException();
+  //   // TODO: add to history, need user keycloak ID
+  //   return await this.collection.insertOne({
+  //     productId,
+  //     amount,
+  //     minimumAlert,
+  //     uid,
+  //   });
+  // }
 
-  async findByProductId(productId: string): Promise<ProductStock> {
-    if (!ObjectID.isValid(productId)) throw new BadRequestException();
-    return await this.collection
+  async findByProductId(productId: string): Promise<ProductStock | null> {
+    if (!ObjectId.isValid(productId)) throw new BadRequestException();
+    return (await this.collection
       .find({ productId: productId })
       .sort({ productId: 1 })
-      .next();
+      .next()) as unknown as Promise<ProductStock>;
   }
 
   // TODO: Check if id is valid
@@ -71,39 +68,88 @@ export class ProductStockService {
 
   async update(
     productId: string,
-    _id: string,
     amount: number,
     minimumAlert: number,
     uid: string,
-  ): Promise<ProductStatus> {
-    if (!ObjectID.isValid(productId)) throw new BadRequestException();
+  ): Promise<ModifyResult> {
+    if (!ObjectId.isValid(productId)) throw new BadRequestException();
 
-    await this.collection.updateOne(
-      { _id },
+    return await this.collection.findOneAndUpdate(
+      { productId: productId },
       {
         $set: {
-          productId,
-          amount,
-          minimumAlert,
-          uid,
+          amount: amount,
+          minimumAlert: minimumAlert,
+          uid: uid,
+          status: this.status(amount, minimumAlert),
         },
       },
+      { upsert: true, returnDocument: 'after' },
     );
-    return this.status(amount, minimumAlert);
   }
 
-  async remove(productId: string): Promise<DeleteWriteOpResultObject> {
-    if (!ObjectID.isValid(productId)) throw new BadRequestException();
+  async remove(productId: string): Promise<DeleteResult> {
+    if (!ObjectId.isValid(productId)) throw new BadRequestException();
     const { _id } = await this.findByProductId(productId);
-    if (!ObjectID.isValid(_id)) throw new BadRequestException();
+    if (!ObjectId.isValid(_id)) throw new BadRequestException();
     return await this.collection.deleteOne({
-      _id: new ObjectID(_id),
+      _id: new ObjectId(_id),
     });
   }
 
-  status(amount: number, minimumAlert: number): ProductStatus {
-    if (amount === 0) return ProductStatus.OUT_OF_STOCK;
-    else if (amount <= minimumAlert) return ProductStatus.RUNNING_LOW;
-    else return ProductStatus.IN_STOCK;
+  async getMany(productId: string, amount: number): Promise<boolean> {
+    if (!ObjectId.isValid(productId)) throw new BadRequestException();
+    let updateResult: UpdateResult;
+    const stockItem = (await this.collection.findOne({
+      productId,
+    })) as unknown as ProductStock;
+    if (amount > stockItem.amount)
+      throw new BadRequestException(
+        new Error('StockItemAmountError'),
+        'there is no amount available in stock',
+      );
+    else {
+      updateResult = await this.collection.updateOne(
+        { _id: new ObjectId(stockItem._id) },
+        {
+          $set: {
+            amount: stockItem.amount - amount,
+            status: this.status(
+              stockItem.amount - amount,
+              stockItem.minimumAlert,
+            ),
+          },
+        },
+      );
+    }
+    return !!updateResult.modifiedCount;
+  }
+
+  async putMany(productId: string, amount: number): Promise<boolean> {
+    if (!ObjectId.isValid(productId)) throw new BadRequestException();
+    let updateResult: UpdateResult;
+    const stockItem = (await this.collection.findOne({
+      productId,
+    })) as unknown as ProductStock;
+
+    updateResult = await this.collection.updateOne(
+      { _id: new ObjectId(stockItem._id) },
+      {
+        $set: {
+          amount: stockItem.amount + amount,
+          status: this.status(
+            stockItem.amount + amount,
+            stockItem.minimumAlert,
+          ),
+        },
+      },
+    );
+    return !!updateResult.modifiedCount;
+  }
+
+  status(amount: number, minimumAlert: number): StockStatus {
+    if (amount === 0) return StockStatus.OUT_OF_STOCK;
+    else if (amount <= minimumAlert) return StockStatus.RUNNING_LOW;
+    else return StockStatus.IN_STOCK;
   }
 }

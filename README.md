@@ -21,6 +21,7 @@ With the health tragedy resulting from the covid-19 pandemic, several small busi
 ## Getting started
 
 ```bash
+
 $ git clone https://github.com/Budega-Delivery/budega-delivery-api.git new-project
 $ cd new-project
 $ npm install
@@ -46,6 +47,15 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
+```
+
+## Docker image
+
+```bash
+
+$ docker build -t budega/budega-api:vX.X.X .
+$ docker tag budega/budega-api:vX.X.X budega/budega-api:latest
+$ docker push budega/budega-api
 ```
 
 ## Continuous Integration

@@ -9,10 +9,10 @@ import { UpdateProductDepartmentDto } from './dtos/update-product-department.dto
 import {
   Collection,
   Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
-  UpdateWriteOpResult,
+  DeleteResult,
+  InsertOneResult,
+  ObjectId,
+  UpdateResult,
 } from 'mongodb';
 import { COLLECTION, ProductDepartment } from './dtos/product-department';
 
@@ -36,53 +36,55 @@ export class ProductDepartmentService {
 
   async create(
     createProductDepartmentDto: CreateProductDepartmentDto,
-  ): Promise<InsertOneWriteOpResult<ProductDepartment>> {
+  ): Promise<InsertOneResult<ProductDepartment>> {
     return await this.db
       .collection(COLLECTION)
       .insertOne(createProductDepartmentDto);
   }
 
   async findAll(): Promise<ProductDepartment[]> {
-    return await this.collection.find().toArray();
+    return (await this.collection
+      .find()
+      .toArray()) as unknown as ProductDepartment[];
   }
 
   async findOne(id: number): Promise<ProductDepartment> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
 
     const response = await this.collection.findOne({
-      _id: new ObjectID(id),
+      _id: new ObjectId(id),
     });
 
     if (!response) throw new NotFoundException();
-    return response;
+    return response as unknown as ProductDepartment;
   }
 
   async findByName(nameToFind: string): Promise<ProductDepartment> {
-    return await this.collection
+    return (await this.collection
       .find({ name: nameToFind })
       .sort({ name: 1 })
-      .next();
+      .next()) as unknown as ProductDepartment;
   }
 
   async update(
     id: number,
     updateProductDepartmentDto: UpdateProductDepartmentDto,
-  ): Promise<UpdateWriteOpResult> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+  ): Promise<UpdateResult> {
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
 
     return await this.db
       .collection(COLLECTION)
       .updateOne(
-        { _id: new ObjectID(id) },
+        { _id: new ObjectId(id) },
         { $set: { ...updateProductDepartmentDto } },
       );
   }
 
-  async remove(id: number): Promise<DeleteWriteOpResultObject> {
+  async remove(id: number): Promise<DeleteResult> {
     // TODO: remove the department from products
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
     return await this.collection.deleteOne({
-      _id: new ObjectID(id),
+      _id: new ObjectId(id),
     });
   }
 }

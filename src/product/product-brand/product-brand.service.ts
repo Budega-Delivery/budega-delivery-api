@@ -7,10 +7,10 @@ import {
 import {
   Collection,
   Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
-  UpdateWriteOpResult,
+  DeleteResult,
+  InsertOneResult,
+  ObjectId,
+  UpdateResult,
 } from 'mongodb';
 import { COLLECTION, ProductBrand } from './dtos/product-brand';
 
@@ -37,53 +37,55 @@ export class ProductBrandService {
 
   async create(
     createProductBrandDto: CreateProductBrandDto,
-  ): Promise<InsertOneWriteOpResult<ProductBrand>> {
+  ): Promise<InsertOneResult<ProductBrand>> {
     return await this.db
       .collection(COLLECTION)
       .insertOne(createProductBrandDto);
   }
 
   async findAll(): Promise<ProductBrand[]> {
-    return await this.collection.find().toArray();
+    return (await this.collection
+      .find()
+      .toArray()) as unknown as ProductBrand[];
   }
 
   async findOne(id: string): Promise<ProductBrand> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
 
     const response = await this.collection.findOne({
-      _id: new ObjectID(id),
+      _id: new ObjectId(id),
     });
 
     if (!response) throw new NotFoundException();
-    return response;
+    return response as unknown as ProductBrand;
   }
 
   async findByName(nameToFind: string): Promise<ProductBrand> {
-    return await this.collection
+    return (await this.collection
       .find({ name: nameToFind })
       .sort({ name: 1 })
-      .next();
+      .next()) as unknown as ProductBrand;
   }
 
   async update(
     id: string,
     updateProductBrandDto: UpdateProductBrandDto,
-  ): Promise<UpdateWriteOpResult> {
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+  ): Promise<UpdateResult> {
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
     // TODO: update the brand from products
     return await this.db
       .collection(COLLECTION)
       .updateOne(
-        { _id: new ObjectID(id) },
+        { _id: new ObjectId(id) },
         { $set: { ...updateProductBrandDto } },
       );
   }
 
-  async remove(id: string): Promise<DeleteWriteOpResultObject> {
+  async remove(id: string): Promise<DeleteResult> {
     // TODO: remove the brand from products
-    if (!ObjectID.isValid(id)) throw new BadRequestException();
+    if (!ObjectId.isValid(id)) throw new BadRequestException();
     return await this.collection.deleteOne({
-      _id: new ObjectID(id),
+      _id: new ObjectId(id),
     });
   }
 }

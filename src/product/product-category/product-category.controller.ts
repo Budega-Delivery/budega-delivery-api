@@ -6,11 +6,13 @@ import {
   Put,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductCategoryService } from './product-category.service';
 import { CreateProductCategoryDto } from './dtos/create-product-category.dto';
 import { UpdateProductCategoryDto } from './dtos/update-product-category.dto';
-import { Public, Roles } from 'nest-keycloak-connect';
+import { KeycloakAuthGuard } from '../../keycloak/keycloak.auth.guard';
+import { Roles } from '../../keycloak/keycloak.decorator';
 
 @Controller('categories')
 export class ProductCategoryController {
@@ -19,7 +21,8 @@ export class ProductCategoryController {
   ) {}
 
   @Post()
-  @Roles('budega-app:manager', 'budega-app:stockist')
+  @UseGuards(KeycloakAuthGuard)
+  @Roles(['budega-app:manager', 'budega-app:stockist'])
   create(@Body() createProductCategoryDto: CreateProductCategoryDto) {
     return this.productCategoryService.create(createProductCategoryDto);
   }
@@ -35,13 +38,13 @@ export class ProductCategoryController {
   }
 
   @Get(':name')
-  @Public()
   findByName(@Param('name') name: string) {
     return this.productCategoryService.findByName(name);
   }
 
   @Put(':id')
-  @Roles('budega-app:manager', 'budega-app:stockist')
+  @UseGuards(KeycloakAuthGuard)
+  @Roles(['budega-app:manager', 'budega-app:stockist'])
   update(
     @Param('id') id: string,
     @Body() updateProductCategoryDto: UpdateProductCategoryDto,
@@ -50,7 +53,8 @@ export class ProductCategoryController {
   }
 
   @Delete(':id')
-  @Roles('budega-app:manager')
+  @UseGuards(KeycloakAuthGuard)
+  @Roles(['budega-app:manager'])
   remove(@Param('id') id: string) {
     return this.productCategoryService.remove(id);
   }

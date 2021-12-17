@@ -6,12 +6,6 @@ import {
 } from '../../interfaces';
 import { StockHistoryAction } from '../product-stock-history/dtos/product-stock-history';
 
-export enum ProductStatus {
-  OUT_OF_STOCK = 'OUT_OF_STOCK',
-  IN_STOCK = 'IN_STOCK',
-  RUNNING_LOW = 'RUNNING_LOW',
-}
-
 export const COLLECTION = 'products';
 
 export class Product {
@@ -20,7 +14,6 @@ export class Product {
   isActive: boolean;
   price: number;
   images: string[];
-  status: ProductStatus;
   department: ProductDepartment;
   // TODO: add Unidade de medida Type: peso, litro, unidade
   brand: ProductBrand;

@@ -2,35 +2,29 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { KCService } from '../keycloak/keycloak.service';
-import UserRepresentation from 'keycloak-admin/lib/defs/userRepresentation';
+import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
+import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
 
 @Injectable()
 export class UsersService {
   kc: KCService;
 
-  constructor(keycloak: KCService) {
+  constructor(private keycloak: KCService) {
     this.kc = keycloak;
   }
 
-  async create(createUserDto: CreateUserDto) {
-    // TODO: Fix This
-    createUserDto.username = createUserDto.email;
-    createUserDto.username = createUserDto.email;
-    const role = createUserDto.role;
-    delete createUserDto.role;
-    return await this.kc.addUser(createUserDto, role);
-  }
-
-  async findAll() {
+  async findAll(user: UserRepresentation) {
     const roles = await this.kc.getClientRoles();
     if (!roles.length) throw new HttpException('Invalid Content', 403);
     const response: UserRepresentation[] = [];
     for (const r of roles) {
       const res = await this.kc.getUsersWithRole(r.name);
-      res.forEach((u) => {
-        u['clientRoles'] = r;
-        response.push(u);
-      });
+      res
+        .filter((u) => u.id != user['sub'])
+        .forEach((u) => {
+          u['clientRoles'] = r;
+          response.push(u);
+        });
     }
     return response;
   }
@@ -39,18 +33,22 @@ export class UsersService {
     return await this.kc.getUserById(id);
   }
 
-  updateUser(id: string, updateUserDto: UpdateUserDto) {
-    // TODO: Implements
-    return `This action updates a #${id} user ${updateUserDto}`;
+  async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    user: UserRepresentation,
+  ) {
+    const res = await this.kc.updateUser(id, updateUserDto.budegaUser);
+    if (updateUserDto.recheckEmail) await this.kc.recheckEmail(id);
+    if (updateUserDto.resetPassword) await this.kc.resetPassword(id);
+    return res;
   }
 
-  remove(id: string) {
-    // TODO: Implements
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    return await this.kc.removeUser(id);
   }
 
   async createClient(createUserDto: CreateUserDto) {
-    // TODO: Fix This
     createUserDto.username = createUserDto.email;
     return await this.kc.addUser(createUserDto, 'client');
   }
@@ -74,7 +72,17 @@ export class UsersService {
   }
 
   async updateUserImage(id: string, imagePath: string) {
-    // TODO: save image in user attribute keycloak
     return this.kc.updateUserAvatar(id, imagePath);
+  }
+
+  async createEmployee(
+    createUserDto: CreateUserDto,
+    role: RoleRepresentation,
+    user: UserRepresentation,
+  ) {
+    // TODO: log this action
+    createUserDto.username = createUserDto.email;
+    delete createUserDto.role;
+    return await this.kc.addEmployee(createUserDto, role);
   }
 }

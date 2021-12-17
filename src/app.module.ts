@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 
-import { KCModule } from './keycloak/KCModule';
 import { ProductModule } from './product/product.module';
 import { UsersModule } from './users/users.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
+import { KeycloakAuthModule } from './keycloak/keycloak.auth.module';
+import { HttpModule } from '@nestjs/axios';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -17,8 +19,10 @@ import { ConfigModule } from '@nestjs/config';
       serveRoot: '/uploads',
     }),
     ProductModule,
-    KCModule,
     UsersModule,
+    KeycloakAuthModule,
+    HttpModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}

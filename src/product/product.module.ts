@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { ExecutionContext, Module } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 
@@ -12,6 +12,8 @@ import { ProductDepartmentService } from './product-department/product-departmen
 import { ProductCategoryService } from './product-category/product-category.service';
 import { ProductStockService } from './product-stock/product-stock.service';
 import { KCService } from '../keycloak/keycloak.service';
+import { HttpModule } from '@nestjs/axios';
+import { KeycloakAuthModule } from '../keycloak/keycloak.auth.module';
 
 @Module({
   imports: [
@@ -20,7 +22,10 @@ import { KCService } from '../keycloak/keycloak.service';
     ProductDepartmentModule,
     ProductCategoryModule,
     ProductStockModule,
+    //base
     DatabaseModule,
+    KeycloakAuthModule,
+    HttpModule,
   ],
   controllers: [ProductController],
   providers: [
@@ -29,6 +34,7 @@ import { KCService } from '../keycloak/keycloak.service';
     ProductDepartmentService,
     ProductCategoryService,
     ProductStockService,
+    // base
     KCService,
   ],
 })

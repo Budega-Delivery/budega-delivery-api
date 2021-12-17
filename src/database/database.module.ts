@@ -15,9 +15,7 @@ import { MongoClient, Db, Logger } from 'mongodb';
             parseInt(process.env.DATABASE_PORT, 10) || 27017
           }/${process.env.DATABASE_NAME}`;
           console.debug(connectString);
-          const client = await MongoClient.connect(connectString, {
-            useUnifiedTopology: true,
-          });
+          const client = await MongoClient.connect(connectString, {});
           return client.db();
           // await db.collection('users').createIndex({ email: 1 }, { unique: true, sparse: true });
         } catch (e) {
