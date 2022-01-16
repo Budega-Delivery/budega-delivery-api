@@ -14,7 +14,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { KeycloakAuthGuard } from '../keycloak/keycloak.auth.guard';
 import { Roles } from '../keycloak/keycloak.decorator';
-import { KeycloakUserContext } from '../keycloak/utils/user.context';
+import { KeycloakUserContext, KeycloakUserRoleContext } from '../keycloak/utils/user.context';
 import { ObjectId } from 'mongodb';
 import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
@@ -36,9 +36,10 @@ export class OrdersController {
 
   @Get()
   @UseGuards(KeycloakAuthGuard)
+  @Roles(['budega-app:client', 'budega-app:manager', 'budega-app:stockist', 'budega-app:deliveryperson'])
   async findAll(
     @KeycloakUserContext() user: UserRepresentation,
-    @KeycloakUserContext() userRole: RoleRepresentation,
+    @KeycloakUserRoleContext() userRole: RoleRepresentation,
   ) {
     return await this.ordersService.findAll(user, userRole);
   }
@@ -71,5 +72,14 @@ export class OrdersController {
     @KeycloakUserContext() user: UserRepresentation,
   ) {
     return await this.ordersService.remove(id, user);
+  }
+
+  @Delete(':id')
+  @UseGuards(KeycloakAuthGuard)
+  async cancel(
+    @Param('id') id: ObjectId,
+    @KeycloakUserContext() user: UserRepresentation,
+  ) {
+    return await this.ordersService.cancel(id, user);
   }
 }

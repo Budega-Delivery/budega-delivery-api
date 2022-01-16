@@ -69,24 +69,24 @@ export class OrdersService {
     user: UserRepresentation,
     userRole: RoleRepresentation,
   ): Promise<Order[]> {
-    switch (userRole.name) {
-      case 'client':
-        return (await this.collection
-          .find({ userId: new ObjectId(user['sub']) })
+    if (userRole.name === 'client') {
+      const result = (await this.collection
+          .find({ userId: user['sub'] })
           .toArray()) as unknown as Order[];
-      case 'manager':
-        return (await this.collection.find().toArray()) as unknown as Order[];
-      case 'stockist':
-        return (await this.collection
-          .find({ state: 'ORDER' })
-          .toArray()) as unknown as Order[];
-      case 'deliveryperson':
-        return (await this.collection
-          .find({ state: 'READY' || 'DELIVERY' })
-          .toArray()) as unknown as Order[];
-      default:
-        return [];
+      return result;
     }
+    else if (userRole.name === 'manager')
+      return (await this.collection.find().toArray()) as unknown as Order[];
+    else if (userRole.name === 'stockist')
+      return (await this.collection
+      .find({ state: 'ORDER' })
+      .toArray()) as unknown as Order[];
+    else if (userRole.name === 'deliveryperson')
+      return (await this.collection
+      .find({ state: 'READY' || 'DELIVERY' })
+      .toArray()) as unknown as Order[];
+    else
+      return [];
   }
 
   async findOne(
@@ -109,4 +109,9 @@ export class OrdersService {
   async remove(id: ObjectId, user: UserRepresentation) {
     return `This action removes a #${id} order`;
   }
+
+  async cancel(id: ObjectId, user: UserRepresentation) {
+    return `This action cancel a #${id} order`;
+  }
+
 }

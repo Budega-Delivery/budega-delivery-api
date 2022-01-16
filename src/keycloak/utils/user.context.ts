@@ -6,3 +6,11 @@ export const KeycloakUserContext = createParamDecorator(
     return req.user;
   },
 );
+
+
+export const KeycloakUserRoleContext = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const req = ctx.switchToHttp().getRequest();
+    return req.userRole;
+  },
+);
