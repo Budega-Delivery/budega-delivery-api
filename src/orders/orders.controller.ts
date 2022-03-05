@@ -14,7 +14,10 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { KeycloakAuthGuard } from '../keycloak/keycloak.auth.guard';
 import { Roles } from '../keycloak/keycloak.decorator';
-import { KeycloakUserContext, KeycloakUserRoleContext } from '../keycloak/utils/user.context';
+import {
+  KeycloakUserContext,
+  KeycloakUserRoleContext,
+} from '../keycloak/utils/user.context';
 import { ObjectId } from 'mongodb';
 import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
@@ -36,7 +39,12 @@ export class OrdersController {
 
   @Get()
   @UseGuards(KeycloakAuthGuard)
-  @Roles(['budega-app:client', 'budega-app:manager', 'budega-app:stockist', 'budega-app:deliveryperson'])
+  @Roles([
+    'budega-app:client',
+    'budega-app:manager',
+    'budega-app:stockist',
+    'budega-app:delivery-person',
+  ])
   async findAll(
     @KeycloakUserContext() user: UserRepresentation,
     @KeycloakUserRoleContext() userRole: RoleRepresentation,

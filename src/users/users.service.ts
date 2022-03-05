@@ -49,8 +49,19 @@ export class UsersService {
   }
 
   async createClient(createUserDto: CreateUserDto) {
+    
     createUserDto.username = createUserDto.email;
-    return await this.kc.addUser(createUserDto, 'client');
+    createUserDto.credentials = [{value: createUserDto.password}]
+
+    return await this.kc.addUser({
+      username: createUserDto.username,
+      email: createUserDto.email,
+      enabled: true,
+      credentials: createUserDto.credentials,
+      firstName: createUserDto.firstName,
+      lastName: createUserDto.lastName
+
+    }, 'client');
   }
 
   updateClient(id: string, updateUserDto: UpdateUserDto) {

@@ -6,5 +6,8 @@ export class CreateUserDto {
   firstName?: string;
   lastName?: string;
   enabled?: boolean;
+  password?: string;
+  confirmPassword?: string;
+  credentials?: [{}];
   role?: RoleRepresentation;
 }

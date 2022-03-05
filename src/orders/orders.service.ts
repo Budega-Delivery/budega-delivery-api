@@ -33,7 +33,6 @@ export class OrdersService {
   }
 
   async create(createOrderDto: CreateOrderDto, user: UserRepresentation) {
-    // createOrderDto.userId = user.id;
     let newOrder = new Order();
     newOrder.itemsList = createOrderDto.itemsList;
     newOrder.addressId = createOrderDto.addressId || '';
@@ -71,22 +70,20 @@ export class OrdersService {
   ): Promise<Order[]> {
     if (userRole.name === 'client') {
       const result = (await this.collection
-          .find({ userId: user['sub'] })
-          .toArray()) as unknown as Order[];
+        .find({ userId: user['sub'] })
+        .toArray()) as unknown as Order[];
       return result;
-    }
-    else if (userRole.name === 'manager')
+    } else if (userRole.name === 'manager')
       return (await this.collection.find().toArray()) as unknown as Order[];
     else if (userRole.name === 'stockist')
       return (await this.collection
-      .find({ state: 'ORDER' })
-      .toArray()) as unknown as Order[];
-    else if (userRole.name === 'deliveryperson')
+        .find({ state: 'ORDER' })
+        .toArray()) as unknown as Order[];
+    else if (userRole.name === 'delivery-person')
       return (await this.collection
-      .find({ state: 'READY' || 'DELIVERY' })
-      .toArray()) as unknown as Order[];
-    else
-      return [];
+        .find({ state: 'READY' || 'DELIVERY' })
+        .toArray()) as unknown as Order[];
+    else return [];
   }
 
   async findOne(
@@ -103,7 +100,26 @@ export class OrdersService {
     user: UserRepresentation,
     userRole: RoleRepresentation,
   ) {
-    return `This action updates a #${id} order`;
+    // TODO: receber a order e a ação tomada
+    // TODO: devolver objeto atualizado
+    // TODO: fazer pooling no frontend ?
+    // TODO: não fazer bduff pensar no simples
+    if (userRole.name === 'client') {
+      const result = (await this.collection
+        .find({ userId: user['sub'] })
+        .toArray()) as unknown as Order[];
+      return result;
+    } else if (userRole.name === 'manager')
+      return (await this.collection.find().toArray()) as unknown as Order[];
+    else if (userRole.name === 'stockist')
+      return (await this.collection
+        .find({ state: 'ORDER' })
+        .toArray()) as unknown as Order[];
+    else if (userRole.name === 'delivery-person')
+      return (await this.collection
+        .find({ state: 'READY' || 'DELIVERY' })
+        .toArray()) as unknown as Order[];
+    else return [];
   }
 
   async remove(id: ObjectId, user: UserRepresentation) {
@@ -113,5 +129,4 @@ export class OrdersService {
   async cancel(id: ObjectId, user: UserRepresentation) {
     return `This action cancel a #${id} order`;
   }
-
 }
