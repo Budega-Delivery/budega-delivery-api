@@ -15,10 +15,17 @@ export interface TimelineItem {
   state: ORDER_STATE;
 }
 
+export interface OrderAddress {
+  street: string,
+  cep: string,
+  number: string,
+  district: string
+}
+
 export class Order {
   itemsList: CartItem[];
   userId: string;
-  addressId: string;
+  orderAddress: OrderAddress;
   paymentMode: PAYMENT_MODE;
   state: ORDER_STATE;
   timeline: TimelineItem[];

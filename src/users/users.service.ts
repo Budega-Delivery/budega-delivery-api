@@ -39,8 +39,8 @@ export class UsersService {
     user: UserRepresentation,
   ) {
     const res = await this.kc.updateUser(id, updateUserDto.budegaUser);
-    if (updateUserDto.recheckEmail) await this.kc.recheckEmail(id);
-    if (updateUserDto.resetPassword) await this.kc.resetPassword(id);
+    //if (updateUserDto.recheckEmail) await this.kc.recheckEmail(id);
+    //if (updateUserDto.resetPassword) await this.kc.resetPassword(id);
     return res;
   }
 

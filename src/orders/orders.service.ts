@@ -3,7 +3,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Collection, Db, ObjectId } from 'mongodb';
 import { KCService } from '../keycloak/keycloak.service';
-import { CartItem, COLLECTION, Order, TimelineItem } from './dto/orders';
+import { CartItem, COLLECTION, Order, ORDER_STATE } from './dto/orders';
 import { ProductStockService } from '../product/product-stock/product-stock.service';
 import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 import RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
@@ -35,7 +35,7 @@ export class OrdersService {
   async create(createOrderDto: CreateOrderDto, user: UserRepresentation) {
     let newOrder = new Order();
     newOrder.itemsList = createOrderDto.itemsList;
-    newOrder.addressId = createOrderDto.addressId || '';
+    newOrder.orderAddress = createOrderDto.orderAddress;
     newOrder.paymentMode = createOrderDto.paymentMode || 'MONEY';
     newOrder.userId = user['sub'];
     newOrder.state = 'ORDER';
@@ -68,22 +68,102 @@ export class OrdersService {
     user: UserRepresentation,
     userRole: RoleRepresentation,
   ): Promise<Order[]> {
-    if (userRole.name === 'client') {
-      const result = (await this.collection
-        .find({ userId: user['sub'] })
+    if (userRole.name === 'client')
+    {
+      const orders = (await this.collection
+        .aggregate(
+          [
+            { $match: { userId: user['sub'] }},
+            { $lookup: {
+              from: 'products',
+              let: { 'list': '$itemsList' },
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      $in: [ {$toString: '$_id'}, '$$list.productId' ]
+                    },
+                  },
+                },
+              ],
+              'as': 'items'
+            }}
+          ])
         .toArray()) as unknown as Order[];
-      return result;
+        return orders;
     } else if (userRole.name === 'manager')
-      return (await this.collection.find().toArray()) as unknown as Order[];
-    else if (userRole.name === 'stockist')
+    {
       return (await this.collection
-        .find({ state: 'ORDER' })
-        .toArray()) as unknown as Order[];
-    else if (userRole.name === 'delivery-person')
+      .aggregate(
+        [
+          { 
+            $lookup: {
+            from: 'products',
+            let: { 'list': '$itemsList' },
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    $in: [ {$toString: '$_id'}, '$$list.productId' ]
+                  },
+                },
+              },
+            ],
+            'as': 'items'
+          }}]).toArray()) as unknown as Order[];
+    } else if (userRole.name === 'stockist')
+    {
+        return (await this.collection
+        .aggregate(
+          [
+            { $match: { $or:
+              [
+                {state: 'SEPARATING', timeline: { $elemMatch: {userId: user['sub']}}},
+                {state: 'ORDER'}
+              ]},
+            },
+            { 
+              $lookup: {
+              from: 'products',
+              let: { 'list': '$itemsList' },
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      $in: [ {$toString: '$_id'}, '$$list.productId' ]
+                    },
+                  },
+                },
+              ],
+              'as': 'items'
+            }}]).toArray()) as unknown as Order[];
+    } else if (userRole.name === 'delivery-person')
+    {
       return (await this.collection
-        .find({ state: 'READY' || 'DELIVERY' })
-        .toArray()) as unknown as Order[];
-    else return [];
+      .aggregate(
+        [
+          { $match: { $or:
+            [
+              {state: 'DELIVERY', timeline: { $elemMatch: {userId: user['sub']}}},
+              {state: 'READY'}
+            ]},
+          },
+          { 
+            $lookup: {
+            from: 'products',
+            let: { 'list': '$itemsList' },
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    $in: [ {$toString: '$_id'}, '$$list.productId' ]
+                  },
+                },
+              },
+            ],
+            'as': 'items'
+          }}]).toArray()) as unknown as Order[];
+    } else return [];
   }
 
   async findOne(
@@ -100,33 +180,14 @@ export class OrdersService {
     user: UserRepresentation,
     userRole: RoleRepresentation,
   ) {
-    // TODO: receber a order e a ação tomada
-    // TODO: devolver objeto atualizado
-    // TODO: fazer pooling no frontend ?
-    // TODO: não fazer bduff pensar no simples
-    if (userRole.name === 'client') {
-      const result = (await this.collection
-        .find({ userId: user['sub'] })
-        .toArray()) as unknown as Order[];
-      return result;
-    } else if (userRole.name === 'manager')
-      return (await this.collection.find().toArray()) as unknown as Order[];
-    else if (userRole.name === 'stockist')
-      return (await this.collection
-        .find({ state: 'ORDER' })
-        .toArray()) as unknown as Order[];
-    else if (userRole.name === 'delivery-person')
-      return (await this.collection
-        .find({ state: 'READY' || 'DELIVERY' })
-        .toArray()) as unknown as Order[];
-    else return [];
+    const now = new Date();
+    const order = await this.collection.findOne({_id: new ObjectId(id)})
+    order.state = updateOrderDto.state
+    order.timeline = [...order.timeline, { date: now, userId: user['sub'], state: updateOrderDto.state}]
+    return await this.collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: order},
+    );     
   }
 
-  async remove(id: ObjectId, user: UserRepresentation) {
-    return `This action removes a #${id} order`;
-  }
-
-  async cancel(id: ObjectId, user: UserRepresentation) {
-    return `This action cancel a #${id} order`;
-  }
 }

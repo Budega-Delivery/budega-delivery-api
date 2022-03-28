@@ -1,7 +1,7 @@
-import { CartItem, PAYMENT_MODE } from './orders';
+import { CartItem, OrderAddress, PAYMENT_MODE } from './orders';
 
 export class CreateOrderDto {
   itemsList: CartItem[];
-  addressId: string;
+  orderAddress: OrderAddress;
   paymentMode: PAYMENT_MODE;
 }
